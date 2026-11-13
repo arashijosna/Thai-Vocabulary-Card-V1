@@ -1,7 +1,7 @@
 {
-  "name": "泰文字卡學習",
-  "short_name": "泰文字卡",
-  "description": "泰文單字與短句學習字卡，支援發音練習與語音朗讀",
+  "name": "泰語單字卡",
+  "short_name": "泰語單字",
+  "description": "泰語單字學習與記憶卡",
   "lang": "zh-Hant",
   "start_url": "/",
   "scope": "/",
