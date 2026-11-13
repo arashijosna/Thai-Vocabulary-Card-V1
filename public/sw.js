@@ -1,4 +1,4 @@
-const CACHE_NAME = 'thai-cards-v2';
+const CACHE_NAME = 'thai-cards-v3';
 const ASSETS = ['/', '/index.html', '/manifest.json', '/icon.svg', '/icon-maskable.svg'];
 
 self.addEventListener('install', (event) => {
