@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Mic, MicOff, Check, X, AlertCircle, Loader2 } from 'lucide-react';
+import { Mic, MicOff, Check, X, AlertCircle, Loader2, Volume2 } from 'lucide-react';
 import type { Flashcard } from '../data/cards';
 import {
   createThaiRecognition,
   isSpeechRecognitionSupported,
   compareThai,
   normalizeThai,
+  speakThai, // 引入發音功能
 } from '../lib/speech';
 
 interface Props {
@@ -26,20 +27,18 @@ export default function PracticeSection({ card }: Props) {
   const [state, setState] = useState<PracticeState>('idle');
   const [result, setResult] = useState<PracticeResult | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
-  const [target, setTarget] = useState<TargetType>('word'); // 新增目標切換
+  const [target, setTarget] = useState<TargetType>('word');
   const recognitionRef = useRef<ReturnType<typeof createThaiRecognition>>(null);
 
-  // 當卡片切換時，重置所有狀態
   useEffect(() => {
     setResult(null);
     setState('idle');
     setErrorMsg('');
-    setTarget('word'); // 預設切回單字
+    setTarget('word');
     stopIfRunning();
     return stopIfRunning;
   }, [card.id]);
 
-  // 當切換練習目標時，重置結果
   useEffect(() => {
     setResult(null);
     setState('idle');
@@ -52,7 +51,6 @@ export default function PracticeSection({ card }: Props) {
     recognitionRef.current = null;
   }
 
-  // 決定當下要比對的文字是單字還是例句
   const targetText = target === 'word' ? card.thai : card.example;
 
   function startPractice() {
@@ -111,7 +109,6 @@ export default function PracticeSection({ card }: Props) {
   }
 
   function finish(heard: string) {
-    // 傳入正確的目標字串進行比對
     const diff = compareThai(targetText, heard);
     setState('done');
     setResult({
@@ -128,7 +125,6 @@ export default function PracticeSection({ card }: Props) {
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm text-stone-500 font-medium">發音練習</p>
         
-        {/* 新增切換按鈕 (只有當例句存在時才顯示) */}
         {card.example && (
           <div className="flex bg-stone-100 rounded-lg p-0.5">
             <button
@@ -214,15 +210,16 @@ export default function PracticeSection({ card }: Props) {
               </div>
             </div>
           ) : (
-            <div className="rounded-xl bg-orange-50 border border-orange-200 p-3.5">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="rounded-xl bg-orange-50 border border-orange-200 p-4">
+              <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center shrink-0">
                   <X className="w-5 h-5 text-white" strokeWidth={3} />
                 </div>
                 <p className="text-orange-700 font-bold">再試一次！</p>
               </div>
-              <p className="text-sm text-stone-600 mb-1.5">紅色部分需要再加強：</p>
-              <p className="text-2xl leading-relaxed tracking-wide" style={{ fontFamily: "'Noto Sans Thai', sans-serif" }}>
+
+              <p className="text-sm text-stone-600 mb-1.5">沒有辨識成功的字：</p>
+              <p className="text-2xl leading-relaxed tracking-wide mb-4" style={{ fontFamily: "'Noto Sans Thai', sans-serif" }}>
                 {normalizeThai(targetText).split('').map((ch, i) => (
                   <span
                     key={i}
@@ -236,6 +233,36 @@ export default function PracticeSection({ card }: Props) {
                   </span>
                 ))}
               </p>
+
+              {/* 顯示拼音與注音 (針對單字) */}
+              {target === 'word' && (card.romanization || card.zhuyin) && (
+                <div className="mb-4 p-3 bg-white/70 rounded-lg text-sm text-stone-700 border border-orange-100">
+                  <p className="font-bold text-orange-800 mb-1.5">📍 發音參考</p>
+                  {card.romanization && <p className="mb-0.5">拼音：<span className="font-medium">{card.romanization}</span></p>}
+                  {card.zhuyin && <p>注音：<span className="font-medium">{card.zhuyin}</span></p>}
+                </div>
+              )}
+
+              {/* 錯誤引導與聽發音按鈕 */}
+              <div className="text-xs text-stone-500 space-y-2 mb-4">
+                <p>💡 <strong>常見發音盲點：</strong></p>
+                <ul className="list-disc pl-4 space-y-1">
+                  <li><strong>聲調錯誤：</strong> 泰語有 5 個聲調，聲調不對會變成別的字。</li>
+                  <li><strong>長短音：</strong> 檢查母音有沒有拉得太長或太短。</li>
+                  <li><strong>尾音：</strong> 泰語結尾的音（如 k, p, t, m, n, ng）要發得很輕或閉住。</li>
+                </ul>
+              </div>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  speakThai(targetText, 1.0);
+                }}
+                className="w-full flex items-center justify-center gap-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white px-3 py-2.5 text-sm font-bold shadow-sm transition-colors active:scale-95"
+              >
+                <Volume2 className="w-4 h-4" />
+                聽標準發音
+              </button>
             </div>
           )}
         </div>
