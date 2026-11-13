@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#FAF5EC"/>
+  <rect x="96" y="116" width="320" height="280" rx="36" fill="#D97B3F"/>
+  <rect x="130" y="150" width="252" height="212" rx="22" fill="#FFF9F1"/>
+  <text x="256" y="268" font-family="'Noto Sans Thai', sans-serif" font-size="110" font-weight="600" fill="#D97B3F" text-anchor="middle">สวัสดี</text>
+  <text x="256" y="330" font-family="Arial, sans-serif" font-size="34" fill="#8A6A4F" text-anchor="middle">sawatdee</text>
+</svg>
