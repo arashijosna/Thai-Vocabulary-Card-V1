@@ -1,28 +1,44 @@
+import { supabase } from './supabase';
 import type { Flashcard } from '../data/cards';
 
-const STORAGE_KEY = 'thai-flashcards-custom-v1';
+export async function fetchCardsFromCloud(): Promise<Flashcard[]> {
+  const { data, error } = await supabase
+    .from('flashcards')
+    .select('*')
+    .order('created_at', { ascending: true });
 
-export function loadCustomCards(): Flashcard[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (c: Flashcard) =>
-        c && typeof c.thai === 'string' && typeof c.romanization === 'string' && typeof c.chinese === 'string'
-    );
-  } catch {
+  if (error) {
+    console.error('讀取單字失敗:', error);
     return [];
   }
+  return data || [];
 }
 
-export function saveCustomCards(cards: Flashcard[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
-  } catch {
-    // 空間不足或瀏覽器限制時靜默失敗
+export async function addCardToCloud(card: Flashcard): Promise<boolean> {
+  const { error } = await supabase.from('flashcards').insert([card]);
+  if (error) {
+    console.error('新增單字失敗:', error);
+    return false;
   }
+  return true;
+}
+
+export async function addMultipleCardsToCloud(cards: Flashcard[]): Promise<boolean> {
+  const { error } = await supabase.from('flashcards').insert(cards);
+  if (error) {
+    console.error('批次新增失敗:', error);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteCardFromCloud(id: string): Promise<boolean> {
+  const { error } = await supabase.from('flashcards').delete().eq('id', id);
+  if (error) {
+    console.error('刪除單字失敗:', error);
+    return false;
+  }
+  return true;
 }
 
 export function makeId(): string {
