@@ -19,10 +19,12 @@ interface ParsedCard {
 
 const SAMPLE = `[
   {
-    "thai": "ขอโทษ",
-    "pinyin": "kǒr-tôot",
-    "chinese": "不好意思／對不起",
-    "example": "ขอโทษครับ"
+    "thai": "ขอโทษค่ะ",
+    "romanization": "khɔ̌ɔ-thôot khâ",
+    "zhuyin": "ㄎㄡˇ ㄊㄡˋ ㄎㄚˋ",
+    "chinese": "對不起",
+    "example": "ขอโทษค่ะ ฉันมาสาย",
+    "exampleChinese": "對不起，我遲到了。"
   }
 ]`;
 
@@ -36,54 +38,70 @@ export default function ImportCardsModal({ open, onClose, onImport }: Props) {
   function handleParse() {
     setError('');
     setParsed(null);
+
     if (!text.trim()) {
-      setError('請先貼上 JSON 資料');
+      setError('請輸入 JSON 內容');
       return;
     }
+
     let data: unknown;
     try {
       data = JSON.parse(text);
     } catch {
-      setError('JSON 格式不正確，請確認引號、逗號與括號是否完整');
+      setError('JSON 格式錯誤，請檢查括號與雙引號');
       return;
     }
+
     if (!Array.isArray(data)) {
-      setError('最外層必須是陣列，例如：[ { ... }, { ... } ]');
+      setError('資料必須是陣列格式，例如 [ { ... }, { ... } ]');
       return;
     }
+
     const cards: ParsedCard[] = [];
     let invalid = 0;
+
     for (const item of data) {
       if (typeof item !== 'object' || item === null) {
         invalid++;
         continue;
       }
+
       const obj = item as Record<string, unknown>;
+
       const thai = typeof obj.thai === 'string' ? obj.thai.trim() : '';
-      const romanization =
-        typeof obj.pinyin === 'string' ? obj.pinyin.trim() : '';
+      // 支援新的 romanization，並向下相容舊的 pinyin
+      const romanization = typeof obj.romanization === 'string' 
+        ? obj.romanization.trim() 
+        : (typeof obj.pinyin === 'string' ? obj.pinyin.trim() : '');
       const chinese = typeof obj.chinese === 'string' ? obj.chinese.trim() : '';
       const zhuyin = typeof obj.zhuyin === 'string' ? obj.zhuyin.trim() : '';
+      const example = typeof obj.example === 'string' ? obj.example.trim() : '';
+      const exampleChinese = typeof obj.exampleChinese === 'string' ? obj.exampleChinese.trim() : '';
+
       if (!thai || !romanization || !chinese) {
         invalid++;
         continue;
       }
+
       cards.push({
         thai,
         romanization,
         zhuyin,
         chinese,
-        example: typeof obj.example === 'string' ? obj.example.trim() : '',
-        exampleChinese: '',
+        example,
+        exampleChinese,
       });
     }
+
     if (cards.length === 0) {
-      setError('沒有找到有效的字卡，請確認每筆資料都有 thai、pinyin、chinese 三個欄位');
+      setError('找不到有效單字。請確保每筆都有 thai, romanization, chinese 必填欄位。');
       return;
     }
+
     setParsed(cards);
+
     if (invalid > 0) {
-      setError(`有 ${invalid} 筆資料格式不正確已略過（缺少必填欄位）`);
+      setError(`已略過 ${invalid} 筆格式不符的資料。`);
     }
   }
 
@@ -121,13 +139,14 @@ export default function ImportCardsModal({ open, onClose, onImport }: Props) {
 
         <div className="p-5 space-y-4">
           <p className="text-sm text-stone-600 leading-relaxed">
-            貼上 JSON 格式的單字陣列，每筆資料包含
+            貼上 JSON 格式的單字陣列，每筆資料包含 
             <code className="mx-1 rounded bg-amber-900/10 px-1.5 py-0.5 text-xs font-mono">thai</code>
-            <code className="mx-1 rounded bg-amber-900/10 px-1.5 py-0.5 text-xs font-mono">pinyin</code>
-            <code className="mx-1 rounded bg-amber-900/10 px-1.5 py-0.5 text-xs font-mono">chinese</code>
-            三個必填欄位，例句
+            <code className="mx-1 rounded bg-amber-900/10 px-1.5 py-0.5 text-xs font-mono">romanization</code>
+            <code className="mx-1 rounded bg-amber-900/10 px-1.5 py-0.5 text-xs font-mono">chinese</code> 
+            三個必填欄位。其餘選填欄位包含：
+            <code className="mx-1 rounded bg-amber-900/10 px-1.5 py-0.5 text-xs font-mono">zhuyin</code>
             <code className="mx-1 rounded bg-amber-900/10 px-1.5 py-0.5 text-xs font-mono">example</code>
-            為選填。
+            <code className="mx-1 rounded bg-amber-900/10 px-1.5 py-0.5 text-xs font-mono">exampleChinese</code>
           </p>
 
           <textarea
@@ -154,7 +173,7 @@ export default function ImportCardsModal({ open, onClose, onImport }: Props) {
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
                 <p className="text-sm font-bold text-green-700">
-                  已解析出 {parsed.length} 張字卡
+                  成功解析 {parsed.length} 筆單字
                 </p>
               </div>
               <ul className="space-y-1 max-h-32 overflow-y-auto">
@@ -164,7 +183,7 @@ export default function ImportCardsModal({ open, onClose, onImport }: Props) {
                     className="text-sm text-stone-700 truncate"
                     style={{ fontFamily: "'Noto Sans Thai', sans-serif" }}
                   >
-                    {c.thai} ・ {c.chinese}
+                    {c.thai} - {c.chinese}
                   </li>
                 ))}
               </ul>
