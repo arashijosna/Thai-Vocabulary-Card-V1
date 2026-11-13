@@ -8,4 +8,22 @@ html {
 
 body {
   overscroll-behavior-y: none;
+  background-color: #FAF5EC;
+}
+
+/* 自動避開 iPhone 頂部瀏海/動態島與底部橫條的安全距離 */
+.safe-area-container {
+  padding-top: max(1.5rem, calc(env(safe-area-inset-top) + 0.75rem));
+  padding-bottom: max(2.5rem, calc(env(safe-area-inset-bottom) + 1rem));
+}
+
+/* 針對 iOS 強制直式體驗：當手機轉成橫向時顯示防呆提示 */
+#landscape-blocker {
+  display: none;
+}
+
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  #landscape-blocker {
+    display: flex;
+  }
 }
